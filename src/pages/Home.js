@@ -77,14 +77,14 @@ export default function Home() {
               <div className="stat">
                 <img src="/icons/diamond_block.png" alt="Казна" />
                 <div>
-                  <h3>9+</h3>
+                  <h3>5000+</h3>
                   <p>AP в казне</p>
                 </div>
               </div>
               <div className="stat">
                 <img src="/icons/diamond_ore.png" alt="Выплачено" />
                 <div>
-                  <h3>5+</h3>
+                  <h3>10000+</h3>
                   <p>AP выплачено</p>
                 </div>
               </div>
