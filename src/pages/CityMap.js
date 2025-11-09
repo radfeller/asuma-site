@@ -37,7 +37,7 @@ export default function CityMap() {
         <Navbar />
         <iframe
             ref={iframeRef}
-            src='/map/index.html'
+            src='/map/map.html'
             title='Карта Города'
             className='map-iframe'
         />.
