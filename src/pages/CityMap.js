@@ -1,46 +1,74 @@
-import React, {useEffect, useRef, useState} from "react";
-import './CityMap.css';
-import { Link }  from 'react-router-dom';
+// src/pages/CityMap.js
+import React, { useEffect, useRef } from "react";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import Navbar from "../components/Navbar";
+import "./CityMap.css";
 
 export default function CityMap() {
-    const iframeRef = useRef(null);
-    const [loaded, setloaded] = useState(false);
+    const mapContainerRef = useRef(null);
+    const mapRef = useRef(null);
 
     useEffect(() => {
-        const timer = setTimeout(() => setloaded(true), 100)
-        return () => clearTimeout(timer);
-    }, []);
+        const container = mapContainerRef.current;
+        if (!container || mapRef.current) return;
 
-    useEffect(() => {
-        const iframe = iframeRef.current;
-        if (!iframe) return;
+        const img = new Image();
+        img.src = "/map/map.png";
 
-        iframe.onload = () => {
-            try {
-                const iframeWindow = iframe.contentWindow;
-                const mapCanvas = iframeWindow.document.querySelector('canvas');
+        img.onload = () => {
+            const imageWidth = img.width;   // 697
+            const imageHeight = img.height; // 725
 
-                if (mapCanvas) {
-                    mapCanvas.style.pointerEvents = 'none';
-                    mapCanvas.style.transform = 'scale(1.6)';
-                    mapCanvas.style.transformOrigin = 'center center';
-                }
-            } catch (e) {
-                console.warn('Не удалось зафиксировать карту (ограничения iframe): ', e);
-            }
-        }
+            const map = L.map(container, {
+                crs: L.CRS.Simple,
+                zoomControl: false,
+                scrollWheelZoom: true,
+                doubleClickZoom: true,
+                dragging: true,
+                minZoom: 0,
+                maxZoom: 5,
+            });
+
+            mapRef.current = map;
+
+            const bounds = [
+                [0, 0],
+                [imageHeight, imageWidth]
+            ];
+
+            L.imageOverlay("/map/map.png", bounds).addTo(map);
+
+            map.setMaxBounds(bounds);
+            map.options.maxBoundsViscosity = 1.0;
+
+            const center = [imageHeight / 2, imageWidth / 2];
+            const initialZoom = map.getBoundsZoom(bounds); // максимум, чтобы влезла
+
+            map.fitBounds(bounds);
+            map.setView(center, initialZoom);
+
+            map.options.minZoom = initialZoom + 2;
+            map.options.maxZoom = initialZoom + 3;
+
+            const resizeObserver = new ResizeObserver(() => {
+                map.invalidateSize();
+                const newZoom = map.getBoundsZoom(bounds);
+                map.setView(center, newZoom);
+            });
+            resizeObserver.observe(container);
+
+            return () => {
+                resizeObserver.disconnect();
+                map.remove();
+            };
+        };
     }, []);
 
     return (
-        <div className={`citymap-page ${loaded ? "loaded" : ""}`}>
-        <Navbar />
-        <iframe
-            ref={iframeRef}
-            src='/map/map-page.html'
-            title='Карта Города'
-            className='map-iframe'
-        />.
+        <div className="citymap-page">
+            <Navbar />
+            <div ref={mapContainerRef} className="map-container" />
         </div>
-  );
+    );
 }
